@@ -5,12 +5,9 @@ package group
 import (
 	"context"
 	"go.uber.org/zap"
-	"time"
 	"wsutil-go/utils"
 	"wsutil-go/ws"
 )
-
-type Map map[string]interface{}
 
 var groups map[string]*Group
 
@@ -48,12 +45,10 @@ func RegisterGroup(ctx context.Context, group *Group) error {
 	return nil
 }
 
-// AddNewConnWithId add new ws Conn in group, id stand for this conn
+// AddNewSingleConnWithId add new ws Conn in group, id stand for this conn
 // the key can be *net.Coon or new *Group
-func (g *Group) AddNewConnWithId(id string, key interface{}) (err error) {
-	_, ok1 := key.(ws.Conn)
-	_, ok2 := key.(*Group)
-	if key == nil || (!ok1 && !ok2) {
+func (g *Group) AddNewSingleConnWithId(id string, conn *ws.SingleConn) error {
+	if conn == nil {
 		utils.Logger.Error("add conn failed", zap.Error(utils.InvalidArgsErr))
 		return utils.InvalidArgsErr
 	}
@@ -62,7 +57,22 @@ func (g *Group) AddNewConnWithId(id string, key interface{}) (err error) {
 		return utils.OutOfMaxCntErr
 	}
 	groupMap := g.GetGroupMap()
-	groupMap[id] = key
+	groupMap[id] = conn
+
+	return nil
+}
+
+func (g *Group) AddSubGroup(id string, group *Group) error {
+	if group == nil {
+		utils.Logger.Error("add group failed", zap.Error(utils.InvalidArgsErr))
+		return utils.InvalidArgsErr
+	}
+	if len(g.groupMap) > g.maxConnCnt {
+		utils.Logger.Error("add group failed", zap.Error(utils.OutOfMaxCntErr))
+		return utils.OutOfMaxCntErr
+	}
+	groupMap := g.GetGroupMap()
+	groupMap[id] = group
 
 	return nil
 }
@@ -94,15 +104,4 @@ func (g *Group) GetConnById(id string) (interface{}, error) {
 
 func (g *Group) GetGroupMap() Map {
 	return g.groupMap
-}
-
-// append default configuration, each new group builder need to apply this func.
-func appendDefault(opts ...Option) []Option {
-	opts = append(opts,
-		WithUpgrader(&ws.WrappedGorillaUpgrader{}),
-		WithGroupId(""), WithHeartCheck(time.Minute),
-		WithMaxConnCnt(100), WithMaxConnDuration(time.Hour*24*30),
-		WithGroupMap(nil))
-
-	return opts
 }

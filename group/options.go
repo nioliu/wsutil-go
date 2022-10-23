@@ -19,6 +19,17 @@ func apply(group *Group, opt ...Option) {
 	}
 }
 
+// append default configuration, each new group builder need to apply this func.
+func appendDefault(opts ...Option) []Option {
+	opts = append(opts,
+		WithUpgrader(&ws.WrappedGorillaUpgrader{}),
+		WithGroupId(""), WithHeartCheck(time.Minute),
+		WithMaxConnCnt(100), WithMaxConnDuration(time.Hour*24*30),
+		WithGroupMap(nil))
+
+	return opts
+}
+
 func WithMaxConnCnt(cnt int) Option {
 	if cnt <= 0 {
 		utils.Logger.Fatal("integer can't less than 1")

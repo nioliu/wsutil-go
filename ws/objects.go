@@ -6,7 +6,6 @@ import (
 	"context"
 	"net/http"
 	"time"
-	"wsutil-go/utils"
 )
 
 // Conn websocket basic method
@@ -25,52 +24,35 @@ type Upgrader interface {
 	Upgrade(w http.ResponseWriter, r *http.Request, responseHeader http.Header) (Conn, error)
 }
 
-type HandleReceiveMsg func(ctx context.Context, id string, msgType int, msg []byte) error
+type HandleMsgFunc func(ctx context.Context, id string, msgType int, msg []byte, err []error) error
+type HandleTaskErrsFunc func(ctx context.Context, id string, err []error) error
 
 type Msg struct {
 	msg     []byte
 	msgType int
 }
+
 type SingleConn struct {
 	// basic conn
 	Conn
-	ctx                     context.Context
-	BeforeHandleReceivedMsg HandleReceiveMsg
-	AfterHandleReceivedMsg  HandleReceiveMsg
-	Send                    chan Msg // send msg to others
-	HeartCheck              time.Duration
-	SendTimeOut             time.Duration
-	WriteTimeOut            time.Duration
+	id  string
+	ctx context.Context
+
+	BeforeHandleReceivedMsg HandleMsgFunc
+	HandleReceiveMsg        HandleMsgFunc
+	AfterHandleReceivedMsg  HandleMsgFunc
+	HandleReceiveTaskErrors HandleTaskErrsFunc
+
+	BeforeHandleSendMsg  HandleMsgFunc
+	AfterHandleSendMsg   HandleMsgFunc
+	HandleSendTaskErrors HandleTaskErrsFunc
+
+	SendChan     chan Msg // send msg to others
+	HeartCheck   time.Duration
+	SendTimeOut  time.Duration
+	WriteTimeOut time.Duration
 }
 
 // SingleConnOperations conn basic functions
 type SingleConnOperations interface {
-}
-
-// Serve start listen websocket conn
-func (s *SingleConn) Serve() {
-
-}
-
-func (s *SingleConn) writePump() {
-	// heart check
-	ticker := time.NewTicker(s.HeartCheck)
-	defer func() {
-		s.Conn.Close()
-		ticker.Stop()
-	}()
-	select {
-	case <-ticker.C:
-		isDone := make(chan int, 1)
-		go func() {
-			s.Conn.
-		}()
-		if err := utils.DoWithDeadLine(s.ctx, s.SendTimeOut, isDone); err != nil {
-
-		}
-	}
-}
-
-func (s *SingleConn) readPump() {
-
 }

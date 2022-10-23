@@ -21,6 +21,8 @@ type Operation interface {
 	SendMsgWithIds(ctx context.Context, from string, to ...string) error
 }
 
+type Map map[string]interface{}
+
 // Group basic group struct
 type Group struct {
 	// current group id
@@ -37,9 +39,9 @@ type Group struct {
 	WsUpgrader ws.Upgrader
 
 	// beforeHandleHookFunc is applied before handle received msg
-	beforeHandleHookFunc ws.HandleReceiveMsg
+	beforeHandleHookFunc ws.HandleMsgFunc
 	// afterHandleHookFunc is applied after handle received msg
-	afterHandleHookFunc ws.HandleReceiveMsg
+	afterHandleHookFunc ws.HandleMsgFunc
 }
 
 func (g *Group) Broadcast(ctx context.Context, msg []byte) error {
@@ -65,12 +67,4 @@ func (g *Group) Run(ctx context.Context) {
 	for k, v := range g.groupMap {
 
 	}
-}
-
-func waitAndRead(ctx context.Context, conn ws.Conn) error {
-
-}
-
-func waitAndWrite(ctx context.Context, conn ws.Conn) error {
-
 }

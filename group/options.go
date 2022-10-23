@@ -53,7 +53,7 @@ func WithMaxConnDuration(duration time.Duration) Option {
 // WithUpgrader for user decide which websocket upgrader to use
 func WithUpgrader(upgrader ws.Upgrader) Option {
 	if upgrader == nil {
-		utils.Logger.Fatal("set upgrader failed", zap.Error(utils.InvalidOptions))
+		utils.Logger.Fatal("set upgrader failed", zap.Error(utils.InvalidOptionsErr))
 		return nil
 	}
 	return func(group *Group) {

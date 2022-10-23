@@ -3,13 +3,15 @@ package utils
 import "errors"
 
 var (
-	IdNotFound = errors.New("id not found in group")
+	IdNotFoundErr = errors.New("id not found in group")
 
-	InvalidOptions = errors.New("current options is invalid")
+	InvalidOptionsErr = errors.New("current options is invalid")
 
-	InvalidArgs = errors.New("invalid argument")
+	InvalidArgsErr = errors.New("invalid argument")
 
-	DuplicatedId = errors.New("id is duplicated")
+	DuplicatedIdErr = errors.New("id is duplicated")
 
-	OutOfMaxCnt = errors.New("numbers out of limit")
+	OutOfMaxCntErr = errors.New("numbers out of limit")
+
+	TimeOutErr = errors.New("timeout")
 )

@@ -14,26 +14,6 @@ type Map map[string]interface{}
 
 var groups map[string]*Group
 
-// Group basic group struct
-type Group struct {
-	// current group connections
-	groupMap Map
-	// current group id
-	id string
-	// max connector number
-	maxConnCnt int
-	// heart check duration
-	heartCheck time.Duration
-	// max conn duration
-	maxConnDuration time.Duration
-	// upgrader
-	WsUpgrader ws.Upgrader
-	// beforeHandleHookFunc is applied before handle received msg
-	beforeHandleHookFunc func(ctx context.Context, id string, msgType int, msg []byte) error
-	// afterHandleHookFunc is applied after handle received msg
-	afterHandleHookFunc func(ctx context.Context, id string, msgType int, msg []byte) error
-}
-
 // NewDefaultGroupAndUpgrader build websocket group based on gorilla/websocket
 func NewDefaultGroupAndUpgrader(opts ...Option) (*Group, error) {
 	ctx := context.Background()
@@ -61,8 +41,8 @@ func NewGroupWithContext(ctx context.Context, upgrader ws.Upgrader, opts ...Opti
 func RegisterGroup(ctx context.Context, group *Group) error {
 	_, exist := groups[group.id]
 	if exist {
-		utils.Logger.Error("register gruop failed", zap.Error(utils.DuplicatedId))
-		return utils.DuplicatedId
+		utils.Logger.Error("register gruop failed", zap.Error(utils.DuplicatedIdErr))
+		return utils.DuplicatedIdErr
 	}
 	groups[group.id] = group
 	return nil
@@ -74,12 +54,12 @@ func (g *Group) AddNewConnWithId(id string, key interface{}) (err error) {
 	_, ok1 := key.(ws.Conn)
 	_, ok2 := key.(*Group)
 	if key == nil || (!ok1 && !ok2) {
-		utils.Logger.Error("add conn failed", zap.Error(utils.InvalidArgs))
-		return utils.InvalidArgs
+		utils.Logger.Error("add conn failed", zap.Error(utils.InvalidArgsErr))
+		return utils.InvalidArgsErr
 	}
 	if len(g.groupMap) > g.maxConnCnt {
-		utils.Logger.Error("add conn failed", zap.Error(utils.OutOfMaxCnt))
-		return utils.OutOfMaxCnt
+		utils.Logger.Error("add conn failed", zap.Error(utils.OutOfMaxCntErr))
+		return utils.OutOfMaxCntErr
 	}
 	groupMap := g.GetGroupMap()
 	groupMap[id] = key
@@ -91,8 +71,8 @@ func (g *Group) DeleteConnById(id string) error {
 	groupMap := g.GetGroupMap()
 	_, exist := groupMap[id]
 	if !exist {
-		utils.Logger.Error("delete failed", zap.Error(utils.IdNotFound))
-		return utils.IdNotFound
+		utils.Logger.Error("delete failed", zap.Error(utils.IdNotFoundErr))
+		return utils.IdNotFoundErr
 	}
 	delete(groupMap, id)
 
@@ -106,8 +86,8 @@ func (g *Group) GetConnById(id string) (interface{}, error) {
 	groupMap := g.GetGroupMap()
 	i, exist := groupMap[id]
 	if !exist {
-		utils.Logger.Error("get id failed", zap.Error(utils.IdNotFound))
-		return nil, utils.IdNotFound
+		utils.Logger.Error("get id failed", zap.Error(utils.IdNotFoundErr))
+		return nil, utils.IdNotFoundErr
 	}
 	return i, nil
 }

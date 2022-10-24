@@ -7,17 +7,21 @@ import (
 	"wsutil-go/utils"
 )
 
-// Serve start listen websocket conn
-func (s *SingleConn) Serve() {
+// Serve start listen websocket msg
+func (s *SingleConn) Serve() error {
+	apply(s)
+	// todo check default
 	go s.writePump()
 	go s.readPump()
+
+	return nil
 }
 
 func (s *SingleConn) writePump() {
 	// heart check
-	ticker := time.NewTicker(s.HeartCheck)
+	ticker := time.NewTicker(s.heartCheck)
 	defer func() {
-		s.Conn.Close()
+		s.conn.Close()
 		ticker.Stop()
 	}()
 	// control time deadline
@@ -29,7 +33,7 @@ func (s *SingleConn) writePump() {
 		case <-ticker.C:
 			msgType = websocket.PingMessage
 			msg = nil
-		case sendMsg := <-s.SendChan:
+		case sendMsg := <-s.sendChan:
 			msgType = sendMsg.msgType
 			msg = sendMsg.msg
 		}
@@ -38,57 +42,67 @@ func (s *SingleConn) writePump() {
 			defer func() {
 				isDone <- 1
 			}()
-			if err := s.BeforeHandleSendMsg(s.ctx, s.id, msgType, msg, TaskErrs); err != nil {
-				TaskErrs = append(TaskErrs, err)
-				utils.Logger.Error("execute before hook failed", zap.Error(err))
+			if s.beforeHandleSendMsg != nil {
+				if err := s.beforeHandleSendMsg(s.ctx, s.id, msgType, msg, TaskErrs); err != nil {
+					TaskErrs = append(TaskErrs, err)
+					utils.Logger.Error("execute before hook failed", zap.Error(err))
+				}
 			}
-			err := s.Conn.WriteMessage(msgType, nil)
+			err := s.conn.WriteMessage(msgType, nil)
 			if err != nil {
 				TaskErrs = append(TaskErrs, err)
 				// todo add handle error func
 				utils.Logger.Error("send msg failed", zap.Error(err))
 			}
-			if s.AfterHandleSendMsg != nil {
-				if err = s.AfterHandleSendMsg(s.ctx, s.id, msgType, msg, TaskErrs); err != nil {
+			if s.afterHandleSendMsg != nil {
+				if err = s.afterHandleSendMsg(s.ctx, s.id, msgType, msg, TaskErrs); err != nil {
 					TaskErrs = append(TaskErrs, err)
 					utils.Logger.Error("execute afterHook failed", zap.Error(err))
 				}
 			}
 		}()
-		if err := utils.DoWithDeadLine(s.ctx, s.SendTimeOut, isDone); err != nil {
+		if err := utils.DoWithDeadLine(s.ctx, s.sendTimeOut, isDone); err != nil {
 			utils.Logger.Error("send msg failed", zap.Error(err))
 		}
-		if err := s.HandleSendTaskErrors(s.ctx, s.id, TaskErrs); err != nil {
+		if err := s.handleSendTaskErrors(s.ctx, s.id, TaskErrs); err != nil {
 			return
 		}
 	}
 }
 
 func (s *SingleConn) readPump() {
-	defer s.Conn.Close()
+	defer s.conn.Close()
 	for {
 		var TaskErrs []error
-		messageType, msg, err := s.Conn.ReadMessage()
+		messageType, msg, err := s.conn.ReadMessage()
 		if err != nil {
 			utils.Logger.Error("read msg failed", zap.Error(err))
 			return
 		}
-		if s.BeforeHandleReceivedMsg != nil {
-			if err = s.BeforeHandleReceivedMsg(s.ctx, s.id, messageType, msg, TaskErrs); err != nil {
+		if s.beforeHandleReceivedMsg != nil {
+			if err = s.beforeHandleReceivedMsg(s.ctx, s.id, messageType, msg, TaskErrs); err != nil {
 				TaskErrs = append(TaskErrs, err)
 				utils.Logger.Error("execute before handle hook failed", zap.Error(err))
 			}
 		}
-		if err = s.HandleReceiveMsg(s.ctx, s.id, messageType, msg, TaskErrs); err != nil {
+		if err = s.handleReceiveMsg(s.ctx, s.id, messageType, msg, TaskErrs); err != nil {
 			TaskErrs = append(TaskErrs, err)
 			utils.Logger.Error("execute handleMsg failed", zap.Error(err))
 		}
-		if err = s.AfterHandleReceivedMsg(s.ctx, s.id, messageType, msg, TaskErrs); err != nil {
+		if err = s.afterHandleReceivedMsg(s.ctx, s.id, messageType, msg, TaskErrs); err != nil {
 			TaskErrs = append(TaskErrs, err)
 			utils.Logger.Error("execute AfterHandleMsg hook failed", zap.Error(err))
 		}
-		if err = s.HandleSendTaskErrors(s.ctx, s.id, TaskErrs); err != nil {
+		if err = s.handleReceiveTaskErrors(s.ctx, s.id, TaskErrs); err != nil {
 			return
 		}
 	}
+}
+
+func (s *SingleConn) GetId() string {
+	return s.id
+}
+
+func (s *SingleConn) Close() error {
+
 }

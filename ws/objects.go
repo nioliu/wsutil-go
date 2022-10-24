@@ -32,27 +32,32 @@ type Msg struct {
 	msgType int
 }
 
-type SingleConn struct {
-	// basic conn
-	Conn
-	id  string
-	ctx context.Context
-
-	BeforeHandleReceivedMsg HandleMsgFunc
-	HandleReceiveMsg        HandleMsgFunc
-	AfterHandleReceivedMsg  HandleMsgFunc
-	HandleReceiveTaskErrors HandleTaskErrsFunc
-
-	BeforeHandleSendMsg  HandleMsgFunc
-	AfterHandleSendMsg   HandleMsgFunc
-	HandleSendTaskErrors HandleTaskErrsFunc
-
-	SendChan     chan Msg // send msg to others
-	HeartCheck   time.Duration
-	SendTimeOut  time.Duration
-	WriteTimeOut time.Duration
-}
-
 // SingleConnOperations conn basic functions
 type SingleConnOperations interface {
+	Serve() error
+	Close() error
+	writePump()
+	readPump()
+}
+
+type SingleConn struct {
+	// basic conn
+	conn    Conn
+	id      string
+	ctx     context.Context
+	options []Option
+
+	beforeHandleReceivedMsg HandleMsgFunc
+	handleReceiveMsg        HandleMsgFunc
+	afterHandleReceivedMsg  HandleMsgFunc
+	handleReceiveTaskErrors HandleTaskErrsFunc
+
+	beforeHandleSendMsg  HandleMsgFunc
+	afterHandleSendMsg   HandleMsgFunc
+	handleSendTaskErrors HandleTaskErrsFunc
+
+	sendChan     chan Msg // send msg to others
+	heartCheck   time.Duration
+	sendTimeOut  time.Duration
+	writeTimeOut time.Duration
 }

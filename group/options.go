@@ -1,7 +1,6 @@
 package group
 
 import (
-	"context"
 	"go.uber.org/zap"
 	"math/rand"
 	"strconv"
@@ -100,7 +99,7 @@ func WithGroupMap(m Map) Option {
 	}
 }
 
-func WithBeforeHandleHookFunc(f func(ctx context.Context, id string, msgType int, msg []byte) error) Option {
+func WithBeforeHandleHookFunc(f ws.HandleMsgFunc) Option {
 	return func(group *Group) {
 		if group.beforeHandleHookFunc != nil {
 			return
@@ -109,7 +108,7 @@ func WithBeforeHandleHookFunc(f func(ctx context.Context, id string, msgType int
 	}
 }
 
-func WithAfterHandleHookFunc(f func(ctx context.Context, id string, msgType int, msg []byte) error) Option {
+func WithAfterHandleHookFunc(f ws.HandleMsgFunc) Option {
 	return func(group *Group) {
 		if group.afterHandleHookFunc != nil {
 			return

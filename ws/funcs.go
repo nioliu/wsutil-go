@@ -122,12 +122,12 @@ func (s *SingleConn) GetId() string {
 }
 
 func (s *SingleConn) Close() error {
-	s.cancel()
 	close(s.sendChan)
 	if err := s.conn.Close(); err != nil {
 		utils.Logger.Error("close basic conn failed", zap.Error(err))
 		return err
 	}
+	s.cancel()
 	return nil
 }
 

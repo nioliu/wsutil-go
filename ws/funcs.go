@@ -57,6 +57,7 @@ func (s *SingleConn) writePump() {
 				// todo add handle error func
 				utils.Logger.Error("send Msg failed", zap.Error(err))
 			}
+
 			if s.afterHandleSendMsg != nil {
 				if err = s.afterHandleSendMsg(s.ctx, s.id, msgType, msg, TaskErrs); err != nil {
 					TaskErrs = append(TaskErrs, err)

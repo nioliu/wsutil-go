@@ -23,6 +23,8 @@ func NewDefaultGroupWithContextAndUpgrader(ctx context.Context, opts ...Option) 
 
 	// only apply first option for each.
 	opts = appendDefault(opts...)
+
+	apply(g)
 	return g, nil
 }
 

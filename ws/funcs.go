@@ -49,34 +49,34 @@ func (s *SingleConn) writePump() {
 		}
 		fmt.Printf("msgType:%d, msg:%s, time:%s\n", msgType, string(msg), time.Now().String())
 		var TaskErrs []error
-		go func() {
-			defer func() {
-				isDone <- 1
-			}()
-			if s.beforeHandleSendMsg != nil {
-				if err := s.beforeHandleSendMsg(s.ctx, s.id, msgType, msg, TaskErrs); err != nil {
-					TaskErrs = append(TaskErrs, err)
-					utils.Logger.Error("execute before hook failed", zap.Error(err))
-				}
-			}
-			err := s.conn.WriteMessage(msgType, msg)
-			if err != nil {
+		//go func() {
+		//	defer func() {
+		//		isDone <- 1
+		//	}()
+		if s.beforeHandleSendMsg != nil {
+			if err := s.beforeHandleSendMsg(s.ctx, s.id, msgType, msg, TaskErrs); err != nil {
 				TaskErrs = append(TaskErrs, err)
-				// todo add handle error func
-				utils.Logger.Error("send Msg failed", zap.Error(err))
+				utils.Logger.Error("execute before hook failed", zap.Error(err))
 			}
-
-			if s.afterHandleSendMsg != nil {
-				if err = s.afterHandleSendMsg(s.ctx, s.id, msgType, msg, TaskErrs); err != nil {
-					TaskErrs = append(TaskErrs, err)
-					utils.Logger.Error("execute afterHook failed", zap.Error(err))
-				}
-			}
-		}()
-		if err := utils.DoWithDeadLine(s.ctx, s.sendTimeOut, isDone); err != nil {
-			utils.Logger.Error("send Msg failed", zap.Error(err))
-			return
 		}
+		err := s.conn.WriteMessage(msgType, msg)
+		if err != nil {
+			TaskErrs = append(TaskErrs, err)
+			// todo add handle error func
+			utils.Logger.Error("send Msg failed", zap.Error(err))
+		}
+
+		if s.afterHandleSendMsg != nil {
+			if err = s.afterHandleSendMsg(s.ctx, s.id, msgType, msg, TaskErrs); err != nil {
+				TaskErrs = append(TaskErrs, err)
+				utils.Logger.Error("execute afterHook failed", zap.Error(err))
+			}
+		}
+		//}()
+		//if err := utils.DoWithDeadLine(s.ctx, s.sendTimeOut, isDone); err != nil {
+		//	utils.Logger.Error("send Msg failed", zap.Error(err))
+		//	return
+		//}
 		if s.handleSendTaskErrors != nil {
 			if err := s.handleSendTaskErrors(s.ctx, s.id, TaskErrs); err != nil {
 				return

@@ -32,6 +32,7 @@ func NewGroupWithContext(ctx context.Context, upgrader ws.Upgrader, opts ...Opti
 	g := &Group{WsUpgrader: upgrader}
 	opts = appendDefault(opts...)
 
+	apply(g)
 	return g, nil
 }
 

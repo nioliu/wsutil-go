@@ -28,13 +28,14 @@ type HandleMsgFunc func(ctx context.Context, id string, msgType int, msg []byte,
 type HandleTaskErrsFunc func(ctx context.Context, id string, err []error) error
 
 type Msg struct {
-	msg     []byte
-	msgType int
+	Msg     []byte
+	MsgType int
 }
 
 // SingleConnOperations conn basic functions
 type SingleConnOperations interface {
 	Serve() error
+	SendMsg(ctx context.Context, msg []byte, msgType int) error
 	Close() error
 	writePump()
 	readPump()
@@ -42,10 +43,11 @@ type SingleConnOperations interface {
 
 type SingleConn struct {
 	// basic conn
-	conn    Conn
-	id      string
-	ctx     context.Context
-	options []Option
+	conn           Conn
+	id             string
+	ctx            context.Context
+	options        []Option
+	closeWriteChan chan int
 
 	beforeHandleReceivedMsg HandleMsgFunc
 	handleReceiveMsg        HandleMsgFunc
@@ -56,7 +58,7 @@ type SingleConn struct {
 	afterHandleSendMsg   HandleMsgFunc
 	handleSendTaskErrors HandleTaskErrsFunc
 
-	sendChan     chan Msg // send msg to others
+	sendChan     chan Msg // send Msg to others
 	heartCheck   time.Duration
 	sendTimeOut  time.Duration
 	writeTimeOut time.Duration

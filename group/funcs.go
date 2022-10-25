@@ -2,6 +2,7 @@ package group
 
 import (
 	"context"
+	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
 	"time"
 	"wsutil-go/utils"
@@ -11,13 +12,13 @@ import (
 // Operation ws group functions
 type Operation interface {
 	// Broadcast send msg to everyone in a group
-	Broadcast(ctx context.Context, msg []byte) error
+	Broadcast(ctx context.Context, msg ws.Msg) error
 
 	// WorldPing ping everyone in a group
 	WorldPing(ctx context.Context) error
 
 	// SendMsgWithIds send msg to conns in a group
-	SendMsgWithIds(ctx context.Context, from string, to ...string) error
+	SendMsgWithIds(ctx context.Context, msg ws.Msg, to ...string) error
 
 	// AddNewSingleConnWithId add single connector to group
 	AddNewSingleConnWithId(id string, conn *ws.SingleConn) error
@@ -46,19 +47,51 @@ type Group struct {
 	afterHandleHookFunc ws.HandleMsgFunc
 }
 
-func (g *Group) Broadcast(ctx context.Context, msg []byte) error {
-	//TODO implement me
-	panic("implement me")
+func (g *Group) Broadcast(ctx context.Context, msg ws.Msg) error {
+	for _, v := range g.GetGroupMap() {
+		if subG, is := v.(*Group); is {
+			if err := subG.Broadcast(ctx, msg); err != nil {
+				utils.Logger.Error("broadcast failed", zap.Error(err))
+				return err
+			}
+		} else {
+			singleConn := v.(*ws.SingleConn)
+			if err := singleConn.SendMsg(ctx, msg); err != nil {
+				utils.Logger.Error("send msg failed", zap.Error(err))
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (g *Group) WorldPing(ctx context.Context) error {
-	//TODO implement me
-	panic("implement me")
+	return g.Broadcast(ctx, ws.Msg{
+		Msg:     nil,
+		MsgType: websocket.PingMessage,
+	})
 }
 
-func (g *Group) SendMsgWithIds(ctx context.Context, from string, to ...string) error {
-	//TODO implement me
-	panic("implement me")
+func (g *Group) SendMsgWithIds(ctx context.Context, msg ws.Msg, to ...string) error {
+	for i := 0; i < len(to); i++ {
+		c, err := g.GetConnById(to[i])
+		if err != nil {
+			utils.Logger.Error("get object in map failed", zap.Error(err))
+			return err
+		}
+		if subG, is := c.(*Group); is {
+			if err = subG.Broadcast(ctx, msg); err != nil {
+				utils.Logger.Error("broadcast subgroup failed", zap.Error(err))
+				return err
+			}
+		}
+		singleConn := c.(*ws.SingleConn)
+		if err = singleConn.SendMsg(ctx, msg); err != nil {
+			utils.Logger.Error("send msg to single conn failed", zap.Error(err), zap.String("id", to[i]))
+			return err
+		}
+	}
+	return nil
 }
 
 // AddNewSingleConnWithId add new ws Conn in group, id stand for this conn

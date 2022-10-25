@@ -1,13 +1,14 @@
 package ws
 
 import (
+	"context"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
 	"time"
 	"wsutil-go/utils"
 )
 
-// Serve start listen websocket msg
+// Serve start listen websocket Msg
 func (s *SingleConn) Serve() error {
 	apply(s)
 	// todo check default
@@ -34,8 +35,10 @@ func (s *SingleConn) writePump() {
 			msgType = websocket.PingMessage
 			msg = nil
 		case sendMsg := <-s.sendChan:
-			msgType = sendMsg.msgType
-			msg = sendMsg.msg
+			msgType = sendMsg.MsgType
+			msg = sendMsg.Msg
+		case <-s.closeWriteChan:
+			return
 		}
 		var TaskErrs []error
 		go func() {
@@ -52,7 +55,7 @@ func (s *SingleConn) writePump() {
 			if err != nil {
 				TaskErrs = append(TaskErrs, err)
 				// todo add handle error func
-				utils.Logger.Error("send msg failed", zap.Error(err))
+				utils.Logger.Error("send Msg failed", zap.Error(err))
 			}
 			if s.afterHandleSendMsg != nil {
 				if err = s.afterHandleSendMsg(s.ctx, s.id, msgType, msg, TaskErrs); err != nil {
@@ -62,7 +65,7 @@ func (s *SingleConn) writePump() {
 			}
 		}()
 		if err := utils.DoWithDeadLine(s.ctx, s.sendTimeOut, isDone); err != nil {
-			utils.Logger.Error("send msg failed", zap.Error(err))
+			utils.Logger.Error("send Msg failed", zap.Error(err))
 		}
 		if err := s.handleSendTaskErrors(s.ctx, s.id, TaskErrs); err != nil {
 			return
@@ -71,12 +74,12 @@ func (s *SingleConn) writePump() {
 }
 
 func (s *SingleConn) readPump() {
-	defer s.conn.Close()
+	defer s.Close()
 	for {
 		var TaskErrs []error
 		messageType, msg, err := s.conn.ReadMessage()
 		if err != nil {
-			utils.Logger.Error("read msg failed", zap.Error(err))
+			utils.Logger.Error("read Msg failed", zap.Error(err))
 			return
 		}
 		if s.beforeHandleReceivedMsg != nil {
@@ -104,5 +107,16 @@ func (s *SingleConn) GetId() string {
 }
 
 func (s *SingleConn) Close() error {
+	s.closeWriteChan <- 1
+	close(s.sendChan)
+	if err := s.conn.Close(); err != nil {
+		utils.Logger.Error("close basic conn failed", zap.Error(err))
+		return err
+	}
+	return nil
+}
 
+func (s *SingleConn) SendMsg(ctx context.Context, msg Msg) error {
+	s.sendChan <- msg
+	return nil
 }

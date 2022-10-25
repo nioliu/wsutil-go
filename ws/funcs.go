@@ -23,12 +23,13 @@ func (s *SingleConn) Serve() error {
 func (s *SingleConn) writePump() {
 	// heart check
 	ticker := time.NewTicker(s.heartCheck)
+	// control time deadline
+	isDone := make(chan int, 1)
 	defer func() {
 		s.conn.Close()
 		ticker.Stop()
+		close(isDone)
 	}()
-	// control time deadline
-	isDone := make(chan int, 1)
 	for {
 		var msgType int
 		var msg []byte

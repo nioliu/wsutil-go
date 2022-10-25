@@ -39,7 +39,7 @@ func (s *SingleConn) writePump() {
 		var msg []byte
 		select {
 		case <-ticker.C:
-			msgType = websocket.PingMessage
+			msgType = websocket.BinaryMessage
 			msg = nil
 		case sendMsg := <-s.sendChan:
 			msgType = sendMsg.MsgType

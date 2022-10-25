@@ -26,7 +26,10 @@ func (s *SingleConn) writePump() {
 	// control time deadline
 	isDone := make(chan int, 1)
 	defer func() {
-		s.conn.Close()
+		if !s.closed {
+			s.Close()
+			s.closed = true
+		}
 		ticker.Stop()
 		close(isDone)
 	}()
@@ -70,6 +73,7 @@ func (s *SingleConn) writePump() {
 		}()
 		if err := utils.DoWithDeadLine(s.ctx, s.sendTimeOut, isDone); err != nil {
 			utils.Logger.Error("send Msg failed", zap.Error(err))
+			return
 		}
 		if s.handleSendTaskErrors != nil {
 			if err := s.handleSendTaskErrors(s.ctx, s.id, TaskErrs); err != nil {
@@ -80,7 +84,12 @@ func (s *SingleConn) writePump() {
 }
 
 func (s *SingleConn) readPump() {
-	defer s.Close()
+	defer func() {
+		if !s.closed {
+			s.Close()
+			s.closed = true
+		}
+	}()
 	for {
 		var TaskErrs []error
 		messageType, msg, err := s.conn.ReadMessage()

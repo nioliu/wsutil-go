@@ -48,6 +48,7 @@ type SingleConn struct {
 	ctx     context.Context
 	cancel  context.CancelFunc
 	options []Option
+	closed  bool
 
 	beforeHandleReceivedMsg HandleMsgFunc
 	handleReceiveMsg        HandleMsgFunc

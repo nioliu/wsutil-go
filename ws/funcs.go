@@ -67,8 +67,10 @@ func (s *SingleConn) writePump() {
 		if err := utils.DoWithDeadLine(s.ctx, s.sendTimeOut, isDone); err != nil {
 			utils.Logger.Error("send Msg failed", zap.Error(err))
 		}
-		if err := s.handleSendTaskErrors(s.ctx, s.id, TaskErrs); err != nil {
-			return
+		if s.handleSendTaskErrors != nil {
+			if err := s.handleSendTaskErrors(s.ctx, s.id, TaskErrs); err != nil {
+				return
+			}
 		}
 	}
 }

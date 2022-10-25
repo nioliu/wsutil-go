@@ -129,3 +129,12 @@ func WithHandleReceiveMsg(f HandleMsgFunc) Option {
 		conn.handleReceiveMsg = f
 	}
 }
+
+func WithSendTaskErrors(f HandleTaskErrsFunc) Option {
+	return func(conn *SingleConn) {
+		if conn.handleSendTaskErrors != nil {
+			return
+		}
+		conn.handleSendTaskErrors = f
+	}
+}

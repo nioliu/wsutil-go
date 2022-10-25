@@ -24,7 +24,7 @@ func NewDefaultGroupWithContextAndUpgrader(ctx context.Context, opts ...Option) 
 	// only apply first option for each.
 	opts = appendDefault(opts...)
 
-	apply(g)
+	apply(g, opts...)
 	return g, nil
 }
 
@@ -32,7 +32,7 @@ func NewGroupWithContext(ctx context.Context, upgrader ws.Upgrader, opts ...Opti
 	g := &Group{WsUpgrader: upgrader}
 	opts = appendDefault(opts...)
 
-	apply(g)
+	apply(g, opts...)
 	return g, nil
 }
 

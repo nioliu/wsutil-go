@@ -2,8 +2,8 @@ package ws
 
 import (
 	"context"
+	"git.woa.com/nioliu/wsutil-go/utils"
 	"go.uber.org/zap"
-	"wsutil-go/utils"
 )
 
 func NewSingleConn(ctx context.Context, conn Conn, opts ...Option) (*SingleConn, error) {

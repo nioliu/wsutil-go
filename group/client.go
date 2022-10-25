@@ -4,9 +4,9 @@ package group
 
 import (
 	"context"
+	"git.woa.com/nioliu/wsutil-go/utils"
+	"git.woa.com/nioliu/wsutil-go/ws"
 	"go.uber.org/zap"
-	"wsutil-go/utils"
-	"wsutil-go/ws"
 )
 
 var groups map[string]*Group

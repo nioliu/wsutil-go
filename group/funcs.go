@@ -2,11 +2,11 @@ package group
 
 import (
 	"context"
+	"git.woa.com/nioliu/wsutil-go/utils"
+	"git.woa.com/nioliu/wsutil-go/ws"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
 	"time"
-	"wsutil-go/utils"
-	"wsutil-go/ws"
 )
 
 // Operation ws group functions

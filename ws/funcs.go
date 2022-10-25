@@ -2,10 +2,10 @@ package ws
 
 import (
 	"context"
+	"git.woa.com/nioliu/wsutil-go/utils"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
 	"time"
-	"wsutil-go/utils"
 )
 
 // Serve start listen websocket Msg

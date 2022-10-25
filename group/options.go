@@ -1,12 +1,12 @@
 package group
 
 import (
+	"git.woa.com/nioliu/wsutil-go/utils"
+	"git.woa.com/nioliu/wsutil-go/ws"
 	"go.uber.org/zap"
 	"math/rand"
 	"strconv"
 	"time"
-	"wsutil-go/utils"
-	"wsutil-go/ws"
 )
 
 // Option Group configuration

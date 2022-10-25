@@ -120,3 +120,12 @@ func WithHeartCheck(d time.Duration) Option {
 		conn.heartCheck = d
 	}
 }
+
+func WithHandleReceiveMsg(f HandleMsgFunc) Option {
+	return func(conn *SingleConn) {
+		if conn.handleReceiveMsg != nil {
+			return
+		}
+		conn.handleReceiveMsg = f
+	}
+}

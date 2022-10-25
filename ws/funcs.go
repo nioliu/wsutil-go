@@ -2,6 +2,7 @@ package ws
 
 import (
 	"context"
+	"fmt"
 	"git.woa.com/nioliu/wsutil-go/utils"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
@@ -46,6 +47,7 @@ func (s *SingleConn) writePump() {
 		case <-s.ctx.Done():
 			return
 		}
+		fmt.Printf("msgType:%d, msg:%s", msgType, string(msg))
 		var TaskErrs []error
 		go func() {
 			defer func() {

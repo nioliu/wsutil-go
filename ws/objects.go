@@ -54,10 +54,12 @@ type SingleConn struct {
 	handleReceiveMsg        HandleMsgFunc
 	afterHandleReceivedMsg  HandleMsgFunc
 	handleReceiveTaskErrors HandleTaskErrsFunc
+	isReading               bool
 
 	beforeHandleSendMsg  HandleMsgFunc
 	afterHandleSendMsg   HandleMsgFunc
 	handleSendTaskErrors HandleTaskErrsFunc
+	isWriting            bool
 
 	sendChan     chan Msg // send Msg to others
 	heartCheck   time.Duration

@@ -1,4 +1,4 @@
-module wsutil-go
+module git.woa.com/nioliu/wsutil-go
 
 go 1.18
 

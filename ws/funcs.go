@@ -84,22 +84,32 @@ func (s *SingleConn) readPump() {
 			utils.Logger.Error("read Msg failed", zap.Error(err))
 			return
 		}
+
 		if s.beforeHandleReceivedMsg != nil {
 			if err = s.beforeHandleReceivedMsg(s.ctx, s.id, messageType, msg, TaskErrs); err != nil {
 				TaskErrs = append(TaskErrs, err)
 				utils.Logger.Error("execute before handle hook failed", zap.Error(err))
 			}
 		}
-		if err = s.handleReceiveMsg(s.ctx, s.id, messageType, msg, TaskErrs); err != nil {
-			TaskErrs = append(TaskErrs, err)
-			utils.Logger.Error("execute handleMsg failed", zap.Error(err))
+
+		if s.handleReceiveMsg != nil {
+			if err = s.handleReceiveMsg(s.ctx, s.id, messageType, msg, TaskErrs); err != nil {
+				TaskErrs = append(TaskErrs, err)
+				utils.Logger.Error("execute handleMsg failed", zap.Error(err))
+			}
 		}
-		if err = s.afterHandleReceivedMsg(s.ctx, s.id, messageType, msg, TaskErrs); err != nil {
-			TaskErrs = append(TaskErrs, err)
-			utils.Logger.Error("execute AfterHandleMsg hook failed", zap.Error(err))
+
+		if s.afterHandleReceivedMsg != nil {
+			if err = s.afterHandleReceivedMsg(s.ctx, s.id, messageType, msg, TaskErrs); err != nil {
+				TaskErrs = append(TaskErrs, err)
+				utils.Logger.Error("execute AfterHandleMsg hook failed", zap.Error(err))
+			}
 		}
-		if err = s.handleReceiveTaskErrors(s.ctx, s.id, TaskErrs); err != nil {
-			return
+
+		if s.handleReceiveTaskErrors != nil {
+			if err = s.handleReceiveTaskErrors(s.ctx, s.id, TaskErrs); err != nil {
+				return
+			}
 		}
 	}
 }

@@ -53,7 +53,7 @@ func (s *SingleConn) writePump() {
 					utils.Logger.Error("execute before hook failed", zap.Error(err))
 				}
 			}
-			err := s.conn.WriteMessage(msgType, nil)
+			err := s.conn.WriteMessage(msgType, msg)
 			if err != nil {
 				TaskErrs = append(TaskErrs, err)
 				// todo add handle error func

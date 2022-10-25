@@ -47,7 +47,7 @@ func (s *SingleConn) writePump() {
 		case <-s.ctx.Done():
 			return
 		}
-		fmt.Printf("msgType:%d, msg:%s", msgType, string(msg))
+		fmt.Printf("msgType:%d, msg:%s, time:%s\n", msgType, string(msg), time.Now().String())
 		var TaskErrs []error
 		go func() {
 			defer func() {

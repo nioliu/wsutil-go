@@ -43,11 +43,11 @@ type SingleConnOperations interface {
 
 type SingleConn struct {
 	// basic conn
-	conn           Conn
-	id             string
-	ctx            context.Context
-	options        []Option
-	closeWriteChan chan int
+	conn    Conn
+	id      string
+	ctx     context.Context
+	cancel  context.CancelFunc
+	options []Option
 
 	beforeHandleReceivedMsg HandleMsgFunc
 	handleReceiveMsg        HandleMsgFunc

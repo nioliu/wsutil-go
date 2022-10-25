@@ -11,6 +11,8 @@ import (
 // Serve start listen websocket Msg
 func (s *SingleConn) Serve() error {
 	apply(s)
+	// control
+	s.ctx, s.cancel = context.WithCancel(s.ctx)
 	// todo check default
 	go s.writePump()
 	go s.readPump()
@@ -37,7 +39,7 @@ func (s *SingleConn) writePump() {
 		case sendMsg := <-s.sendChan:
 			msgType = sendMsg.MsgType
 			msg = sendMsg.Msg
-		case <-s.closeWriteChan:
+		case <-s.ctx.Done():
 			return
 		}
 		var TaskErrs []error
@@ -120,7 +122,7 @@ func (s *SingleConn) GetId() string {
 }
 
 func (s *SingleConn) Close() error {
-	s.closeWriteChan <- 1
+	s.cancel()
 	close(s.sendChan)
 	if err := s.conn.Close(); err != nil {
 		utils.Logger.Error("close basic conn failed", zap.Error(err))

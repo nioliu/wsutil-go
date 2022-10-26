@@ -50,7 +50,9 @@ func (s *SingleConn) writePump() {
 		var TaskErrs []error
 		go func() {
 			defer func() {
-				isDone <- 1
+				if !s.closed {
+					isDone <- 1
+				}
 			}()
 			if s.beforeHandleSendMsg != nil {
 				if err := s.beforeHandleSendMsg(s.ctx, s.id, msgType, msg, TaskErrs); err != nil {

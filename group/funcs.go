@@ -112,24 +112,31 @@ func (g *Group) SendMsgWithIds(ctx context.Context, msg ws.Msg, to ...string) er
 	return nil
 }
 
-// AddNewSingleConnWithId add new ws Conn in group, id stand for this conn
+// AddNewSingleConn add new ws Conn in group, id stand for this conn
 // the key can be *net.Coon or new *Group
-func (g *Group) AddNewSingleConnWithId(id string, singleConn *ws.SingleConn) error {
+func (g *Group) AddNewSingleConn(singleConn *ws.SingleConn) error {
 	if singleConn == nil {
 		utils.Logger.Error("add singleConn failed", zap.Error(utils.InvalidArgsErr))
 		return utils.InvalidArgsErr
 	}
 	// check limit
 	if len(g.groupMap)+1 > g.maxConnCnt {
-		utils.Logger.Error("add singleConn failed", zap.Error(utils.OutOfMaxCntErr))
-		return utils.OutOfMaxCntErr
+		// check active connections
+		if err := g.Broadcast(context.Background(), ws.Msg{}); err != nil {
+			return err
+		}
+		if len(g.groupMap)+1 > g.maxConnCnt {
+			utils.Logger.Error("add singleConn failed", zap.Error(utils.OutOfMaxCntErr))
+			return utils.OutOfMaxCntErr
+		}
 	}
-	groupMap := g.GetGroupMap()
-	groupMap[id] = singleConn
 
 	if !singleConn.GetStatus() {
 		return singleConn.Serve()
 	}
+
+	groupMap := g.GetGroupMap()
+	groupMap[singleConn.GetId()] = singleConn
 
 	return nil
 }

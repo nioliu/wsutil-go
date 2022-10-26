@@ -27,7 +27,7 @@ func (s *SingleConn) writePump() {
 	// control time deadline
 	isDone := make(chan int, 1)
 	defer func() {
-		if !s.closed {
+		if !s.closed && s.isOn {
 			s.Close()
 			s.closed = true
 		}
@@ -35,7 +35,7 @@ func (s *SingleConn) writePump() {
 		close(isDone)
 	}()
 	for {
-		if s.isOn == false {
+		if !s.isOn {
 			return
 		}
 		var msgType int
@@ -100,7 +100,7 @@ func (s *SingleConn) writePump() {
 // developer need to handle TaskErr, since it will never return to active status.
 func (s *SingleConn) readPump() {
 	defer func() {
-		if !s.closed {
+		if !s.closed && s.isOn {
 			s.Close()
 			s.closed = true
 		}
@@ -148,13 +148,13 @@ func (s *SingleConn) GetId() string {
 }
 
 func (s *SingleConn) Close() error {
-	s.isOn = false
 	close(s.sendChan)
 	if err := s.conn.Close(); err != nil {
 		utils.Logger.Error("close basic conn failed", zap.Error(err))
 		return err
 	}
 	s.cancel()
+	s.isOn = false
 	return nil
 }
 

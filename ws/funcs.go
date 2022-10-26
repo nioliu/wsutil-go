@@ -64,8 +64,11 @@ func (s *SingleConn) writePump() {
 				// todo add handle error func
 				utils.Logger.Error("send Msg failed", zap.Error(err))
 			}
+
 			// reset heart check if write successfully
-			ticker.Reset(s.heartCheck)
+			if msgType != websocket.PingMessage {
+				ticker.Reset(s.heartCheck)
+			}
 
 			if s.afterHandleSendMsg != nil {
 				if err := s.afterHandleSendMsg(s.ctx, s.id, msgType, msg, TaskErrs); err != nil {

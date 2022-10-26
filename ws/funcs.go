@@ -106,6 +106,9 @@ func (s *SingleConn) readPump() {
 		}
 	}()
 	for {
+		if !s.isOn {
+			return
+		}
 		var TaskErrs []error
 		messageType, msg, err := s.conn.ReadMessage()
 		if err != nil {

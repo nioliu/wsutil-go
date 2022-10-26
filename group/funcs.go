@@ -65,6 +65,10 @@ func (g *Group) Broadcast(ctx context.Context, msg ws.Msg) error {
 				}
 				continue
 			}
+			if msg.MsgType == 0 {
+				// just for check active
+				continue
+			}
 			if err := singleConn.SendMsg(ctx, msg); err != nil {
 				utils.Logger.Error("send msg failed", zap.Error(err))
 				return err

@@ -169,7 +169,7 @@ func (g *Group) DeleteConnById(ctx context.Context, id string) error {
 		utils.Logger.Error("invalid type for current id", zap.Error(utils.InvalidArgsErr))
 		return utils.InvalidArgsErr
 	}
-	if !sc.GetStatus() {
+	if sc.GetStatus() {
 		if err := sc.Close(); err != nil {
 			utils.Logger.Error("close single conn failed", zap.Error(err))
 			return err

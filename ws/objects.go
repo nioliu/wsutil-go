@@ -49,8 +49,8 @@ type SingleConn struct {
 	cancel     context.CancelFunc
 	options    []Option
 	closed     bool
-	isOn       bool        // is running
-	closeError interface{} // mark close
+	isOn       bool  // is running
+	closeError error // mark close
 
 	beforeHandleReceivedMsg HandleMsgFunc
 	handleReceiveMsg        HandleMsgFunc

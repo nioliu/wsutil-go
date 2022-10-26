@@ -147,3 +147,12 @@ func WithReceiveTaskErrors(f HandleTaskErrsFunc) Option {
 		conn.handleReceiveTaskErrors = f
 	}
 }
+
+func WithCloseError(f error) Option {
+	return func(conn *SingleConn) {
+		if conn.closeError != nil {
+			return
+		}
+		conn.closeError = f
+	}
+}

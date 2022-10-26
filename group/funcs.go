@@ -109,7 +109,11 @@ func (g *Group) AddNewSingleConnWithId(id string, singleConn *ws.SingleConn) err
 	groupMap := g.GetGroupMap()
 	groupMap[id] = singleConn
 
-	return singleConn.Serve()
+	if !singleConn.GetStatus() {
+		return singleConn.Serve()
+	}
+
+	return nil
 }
 
 func (g *Group) AddSubGroup(ctx context.Context, id string, group *Group) error {

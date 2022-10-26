@@ -49,6 +49,7 @@ type SingleConn struct {
 	cancel  context.CancelFunc
 	options []Option
 	closed  bool
+	isOn    bool // is running
 
 	beforeHandleReceivedMsg HandleMsgFunc
 	handleReceiveMsg        HandleMsgFunc

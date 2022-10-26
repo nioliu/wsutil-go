@@ -7,6 +7,7 @@ import (
 	"git.woa.com/nioliu/wsutil-go/utils"
 	"git.woa.com/nioliu/wsutil-go/ws"
 	"go.uber.org/zap"
+	"time"
 )
 
 var groups map[string]*Group
@@ -25,6 +26,8 @@ func NewDefaultGroupWithContextAndUpgrader(ctx context.Context, opts ...Option) 
 	opts = appendDefault(opts...)
 
 	apply(g, opts...)
+	go checkAllInMap(ctx, g)
+
 	return g, nil
 }
 
@@ -33,6 +36,7 @@ func NewGroupWithContext(ctx context.Context, upgrader ws.Upgrader, opts ...Opti
 	opts = appendDefault(opts...)
 
 	apply(g, opts...)
+	go checkAllInMap(ctx, g)
 	return g, nil
 }
 
@@ -46,4 +50,14 @@ func RegisterGroup(ctx context.Context, group *Group) error {
 	}
 	groups[group.id] = group
 	return nil
+}
+
+func checkAllInMap(ctx context.Context, g *Group) {
+	ticker := time.NewTicker(g.heartCheck)
+	for range ticker.C {
+		if err := g.Broadcast(ctx, ws.Msg{}); err != nil {
+			utils.Logger.Error("check status failed", zap.Error(err))
+			return
+		}
+	}
 }

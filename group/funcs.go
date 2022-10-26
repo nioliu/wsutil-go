@@ -45,6 +45,9 @@ type Group struct {
 	beforeHandleHookFunc ws.HandleMsgFunc
 	// afterHandleHookFunc is applied after handle received msg
 	afterHandleHookFunc ws.HandleMsgFunc
+
+	// wordCheckInterval check if all connectors in groupMap is active
+	wordCheckInterval time.Time
 }
 
 func (g *Group) Broadcast(ctx context.Context, msg ws.Msg) error {
@@ -56,6 +59,11 @@ func (g *Group) Broadcast(ctx context.Context, msg ws.Msg) error {
 			}
 		} else {
 			singleConn := v.(*ws.SingleConn)
+			if !singleConn.GetStatus() {
+				if err := g.DeleteConnById(ctx, singleConn.GetId()); err != nil {
+					return err
+				}
+			}
 			if err := singleConn.SendMsg(ctx, msg); err != nil {
 				utils.Logger.Error("send msg failed", zap.Error(err))
 				return err

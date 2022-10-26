@@ -6,6 +6,7 @@ import (
 	"git.woa.com/nioliu/wsutil-go/ws"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
+	"sort"
 	"time"
 )
 
@@ -20,8 +21,11 @@ type Operation interface {
 	// SendMsgWithIds send msg to conns in a group
 	SendMsgWithIds(ctx context.Context, msg ws.Msg, to ...string) error
 
-	// AddNewSingleConnWithId add single connector to group
-	AddNewSingleConnWithId(id string, conn *ws.SingleConn) error
+	// SendMsgWithTags send msg to specified tags
+	SendMsgWithTags(ctx context.Context, msg ws.Msg, strict bool, tags ...string) error
+
+	// AddNewSingleConn add single connector to group
+	AddNewSingleConn(conn *ws.SingleConn) error
 }
 
 type Map map[string]interface{}
@@ -48,6 +52,57 @@ type Group struct {
 
 	// wordCheckInterval check if all connectors in groupMap is active
 	wordCheckInterval time.Time
+}
+
+func (g *Group) SendMsgWithTags(ctx context.Context, msg ws.Msg, strict bool, tags ...string) error {
+	sort.Strings(tags)
+
+	if !strict {
+		for tag := range tags {
+			for _, v := range g.GetGroupMap() {
+				if subG, is := v.(*Group); is {
+					if err := subG.SendMsgWithTags(ctx, msg, strict, tags...); err != nil {
+						return err
+					}
+				} else {
+					singleConn := v.(*ws.SingleConn)
+					for t := range singleConn.GetTags() {
+						if t == tag {
+							if err := singleConn.SendMsg(ctx, msg); err != nil {
+								return err
+							}
+						} else if t > tag {
+							break
+						}
+					}
+				}
+			}
+		}
+	} else {
+		for _, v := range g.GetGroupMap() {
+			if subG, is := v.(*Group); is {
+				if err := subG.SendMsgWithTags(ctx, msg, strict, tags...); err != nil {
+					return err
+				}
+			} else {
+				singleConn := v.(*ws.SingleConn)
+				if len(tags) > len(singleConn.GetTags()) {
+					break
+				}
+
+				var match int
+				currentTags := singleConn.GetTags()
+				// check if all tags in current singleConn
+
+				for i, j := 0, 0; i < len(tags); {
+
+				}
+			}
+
+		}
+	}
+
+	return nil
 }
 
 func (g *Group) Broadcast(ctx context.Context, msg ws.Msg) error {

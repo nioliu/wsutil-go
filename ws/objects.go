@@ -53,6 +53,7 @@ type SingleConn struct {
 	closed     bool
 	isOn       bool // is running
 	serverOnce sync.Once
+	tags       []string
 
 	beforeHandleReceivedMsg HandleMsgFunc
 	handleReceiveMsg        HandleMsgFunc

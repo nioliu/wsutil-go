@@ -3,6 +3,7 @@ package ws
 import (
 	"context"
 	"math/rand"
+	"sort"
 	"strconv"
 	"time"
 )
@@ -165,5 +166,12 @@ func WithAfterCloseFunc(f AfterCloseFunc) Option {
 			return
 		}
 		conn.afterCloseFunc = f
+	}
+}
+
+func WithTags(tags ...string) Option {
+	return func(conn *SingleConn) {
+		conn.tags = append(conn.tags, tags...)
+		sort.Strings(conn.tags)
 	}
 }

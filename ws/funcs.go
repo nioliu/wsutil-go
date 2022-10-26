@@ -173,6 +173,10 @@ func (s *SingleConn) SendMsg(ctx context.Context, msg Msg) error {
 }
 
 // GetStatus add some monitor fields.
-func (s SingleConn) GetStatus() bool {
+func (s *SingleConn) GetStatus() bool {
 	return s.isOn
+}
+
+func (s *SingleConn) GetTags() []string {
+	return s.tags
 }

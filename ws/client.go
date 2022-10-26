@@ -14,6 +14,6 @@ func NewSingleConn(ctx context.Context, conn Conn, opts ...Option) (*SingleConn,
 	}
 	options := appendDefault(opts...)
 
-	s := &SingleConn{conn: conn, options: options, serverOnce: sync.Once{}}
+	s := &SingleConn{ctx: ctx, conn: conn, options: options, serverOnce: sync.Once{}}
 	return s, nil
 }

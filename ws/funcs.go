@@ -114,7 +114,6 @@ func (s *SingleConn) readPump() {
 		if err != nil {
 			TaskErrs = append(TaskErrs, err)
 			s.isOn = false
-			utils.Logger.Error("read Msg failed", zap.Error(err))
 			goto handleError
 		}
 

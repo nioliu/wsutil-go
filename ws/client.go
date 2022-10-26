@@ -4,6 +4,7 @@ import (
 	"context"
 	"git.woa.com/nioliu/wsutil-go/utils"
 	"go.uber.org/zap"
+	"sync"
 )
 
 func NewSingleConn(ctx context.Context, conn Conn, opts ...Option) (*SingleConn, error) {
@@ -13,6 +14,6 @@ func NewSingleConn(ctx context.Context, conn Conn, opts ...Option) (*SingleConn,
 	}
 	options := appendDefault(opts...)
 
-	s := &SingleConn{conn: conn, options: options}
+	s := &SingleConn{conn: conn, options: options, serverOnce: sync.Once{}}
 	return s, nil
 }

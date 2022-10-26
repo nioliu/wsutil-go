@@ -10,14 +10,17 @@ import (
 
 // Serve start listen websocket Msg
 func (s *SingleConn) Serve() error {
-	apply(s)
-	// control
-	s.ctx, s.cancel = context.WithCancel(s.ctx)
-	// todo check default
-	go s.writePump()
-	go s.readPump()
+	s.serverOnce.Do(func() {
+		apply(s)
+		// control
+		s.ctx, s.cancel = context.WithCancel(s.ctx)
+		// todo check default
+		go s.writePump()
+		go s.readPump()
 
-	s.isOn = true // mark
+		s.isOn = true // mark
+
+	})
 	return nil
 }
 
@@ -89,9 +92,11 @@ func (s *SingleConn) writePump() {
 			utils.Logger.Error("send Msg failed", zap.Error(err))
 			return
 		}
-		if s.handleSendTaskErrors != nil {
-			if err := s.handleSendTaskErrors(s.ctx, s.id, TaskErrs); err != nil {
-				return
+		if TaskErrs != nil {
+			if s.handleSendTaskErrors != nil {
+				if err := s.handleSendTaskErrors(s.ctx, s.id, TaskErrs); err != nil {
+					return
+				}
 			}
 		}
 	}
@@ -139,8 +144,10 @@ func (s *SingleConn) readPump() {
 		}
 
 	handleError:
-		if err = s.handleReceiveTaskErrors(s.ctx, s.id, TaskErrs); err != nil {
-			return
+		if TaskErrs != nil {
+			if err = s.handleReceiveTaskErrors(s.ctx, s.id, TaskErrs); err != nil {
+				return
+			}
 		}
 	}
 }

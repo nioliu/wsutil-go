@@ -56,13 +56,10 @@ func main() {
 			return
 		}
 
-		once.Do(func() {
-			if err = singleConn.Serve(); err != nil {
-				log.Println(zap.Error(err))
-				return
-			}
-
-		})
+		if err = singleConn.Serve(); err != nil {
+			log.Println(zap.Error(err))
+			return
+		}
 
 		if err = g.AddNewSingleConn(singleConn); err != nil {
 			if err := singleConn.Close(); err != nil {

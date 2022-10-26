@@ -5,6 +5,7 @@ package ws
 import (
 	"context"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -37,20 +38,21 @@ type Msg struct {
 type SingleConnOperations interface {
 	Serve() error
 	SendMsg(ctx context.Context, msg []byte, msgType int) error
-	Close() error
 	writePump()
 	readPump()
+	Close() error
 }
 
 type SingleConn struct {
 	// basic conn
-	conn    Conn
-	id      string
-	ctx     context.Context
-	cancel  context.CancelFunc
-	options []Option
-	closed  bool
-	isOn    bool // is running
+	conn       Conn
+	id         string
+	ctx        context.Context
+	cancel     context.CancelFunc
+	options    []Option
+	closed     bool
+	isOn       bool // is running
+	serverOnce sync.Once
 
 	beforeHandleReceivedMsg HandleMsgFunc
 	handleReceiveMsg        HandleMsgFunc

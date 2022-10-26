@@ -44,14 +44,13 @@ type SingleConnOperations interface {
 
 type SingleConn struct {
 	// basic conn
-	conn       Conn
-	id         string
-	ctx        context.Context
-	cancel     context.CancelFunc
-	options    []Option
-	closed     bool
-	isOn       bool  // is running
-	closeError error // mark close
+	conn    Conn
+	id      string
+	ctx     context.Context
+	cancel  context.CancelFunc
+	options []Option
+	closed  bool
+	isOn    bool // is running
 
 	beforeHandleReceivedMsg HandleMsgFunc
 	handleReceiveMsg        HandleMsgFunc

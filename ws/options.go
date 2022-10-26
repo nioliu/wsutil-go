@@ -152,19 +152,10 @@ func WithReceiveTaskErrors(f HandleTaskErrsFunc) Option {
 		}
 		if f == nil {
 			f = func(ctx context.Context, id string, err []error) error {
-				return nil
+				return err[len(err)-1]
 			}
 		}
 		conn.handleReceiveTaskErrors = f
-	}
-}
-
-func WithCloseError(f error) Option {
-	return func(conn *SingleConn) {
-		if conn.closeError != nil {
-			return
-		}
-		conn.closeError = f
 	}
 }
 

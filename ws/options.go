@@ -17,7 +17,8 @@ func apply(conn *SingleConn) {
 
 func appendDefault(opts ...Option) []Option {
 	opts = append(opts, WithContext(context.Background()), WithId(""), WithHeartCheck(0),
-		WithSendChan(make(chan Msg, 1)), WithSendTimeOut(0), WithWriteTimeOut(0))
+		WithSendChan(make(chan Msg, 1)), WithSendTimeOut(0), WithWriteTimeOut(0),
+		WithReceiveTaskErrors(nil), WithSendTaskErrors(nil))
 
 	return opts
 }
@@ -135,6 +136,11 @@ func WithSendTaskErrors(f HandleTaskErrsFunc) Option {
 		if conn.handleSendTaskErrors != nil {
 			return
 		}
+		if f == nil {
+			f = func(ctx context.Context, id string, err []error) error {
+				return nil
+			}
+		}
 		conn.handleSendTaskErrors = f
 	}
 }
@@ -143,6 +149,11 @@ func WithReceiveTaskErrors(f HandleTaskErrsFunc) Option {
 	return func(conn *SingleConn) {
 		if conn.handleReceiveTaskErrors != nil {
 			return
+		}
+		if f == nil {
+			f = func(ctx context.Context, id string, err []error) error {
+				return nil
+			}
 		}
 		conn.handleReceiveTaskErrors = f
 	}
@@ -154,5 +165,14 @@ func WithCloseError(f error) Option {
 			return
 		}
 		conn.closeError = f
+	}
+}
+
+func WithAfterCloseFunc(f AfterCloseFunc) Option {
+	return func(conn *SingleConn) {
+		if conn.afterCloseFunc != nil {
+			return
+		}
+		conn.afterCloseFunc = f
 	}
 }

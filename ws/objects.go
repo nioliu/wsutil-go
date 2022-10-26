@@ -26,6 +26,7 @@ type Upgrader interface {
 
 type HandleMsgFunc func(ctx context.Context, id string, msgType int, msg []byte, err []error) error
 type HandleTaskErrsFunc func(ctx context.Context, id string, err []error) error
+type AfterCloseFunc func() error
 
 type Msg struct {
 	Msg     []byte
@@ -63,8 +64,9 @@ type SingleConn struct {
 	handleSendTaskErrors HandleTaskErrsFunc
 	isWriting            bool
 
-	sendChan     chan Msg // send Msg to others
-	heartCheck   time.Duration
-	sendTimeOut  time.Duration
-	writeTimeOut time.Duration
+	afterCloseFunc AfterCloseFunc
+	sendChan       chan Msg // send Msg to others
+	heartCheck     time.Duration
+	sendTimeOut    time.Duration
+	writeTimeOut   time.Duration
 }

@@ -91,6 +91,7 @@ func (s *SingleConn) writePump() {
 	}
 }
 
+// developer need to handle TaskErr at least with CloseError, since it can not return to connected status.
 func (s *SingleConn) readPump() {
 	defer func() {
 		if !s.closed {
@@ -102,8 +103,15 @@ func (s *SingleConn) readPump() {
 		var TaskErrs []error
 		messageType, msg, err := s.conn.ReadMessage()
 		if err != nil {
+			TaskErrs = append(TaskErrs, err)
+			s.isOn = false
 			if err == s.closeError {
-				s.isOn = false
+				if s.afterCloseFunc != nil {
+					if err = s.afterCloseFunc(); err != nil {
+						TaskErrs = append(TaskErrs, err)
+						goto handleError
+					}
+				}
 				return
 			}
 			utils.Logger.Error("read Msg failed", zap.Error(err))
@@ -131,6 +139,7 @@ func (s *SingleConn) readPump() {
 			}
 		}
 
+	handleError:
 		if s.handleReceiveTaskErrors != nil {
 			if err = s.handleReceiveTaskErrors(s.ctx, s.id, TaskErrs); err != nil {
 				return

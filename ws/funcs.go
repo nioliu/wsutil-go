@@ -35,6 +35,9 @@ func (s *SingleConn) writePump() {
 		close(isDone)
 	}()
 	for {
+		if s.isOn == false {
+			return
+		}
 		var msgType int
 		var msg []byte
 		select {
@@ -48,6 +51,9 @@ func (s *SingleConn) writePump() {
 			return
 		}
 		var TaskErrs []error
+		if s.isOn == false {
+			return
+		}
 		go func() {
 			defer func() {
 				if !s.closed {
@@ -142,6 +148,7 @@ func (s *SingleConn) GetId() string {
 }
 
 func (s *SingleConn) Close() error {
+	s.isOn = false
 	close(s.sendChan)
 	if err := s.conn.Close(); err != nil {
 		utils.Logger.Error("close basic conn failed", zap.Error(err))

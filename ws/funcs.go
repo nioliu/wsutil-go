@@ -83,7 +83,6 @@ func (s *SingleConn) writePump() {
 				return
 			}
 		}
-		println("execute completely")
 	}
 }
 

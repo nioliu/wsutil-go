@@ -94,11 +94,21 @@ func (g *Group) SendMsgWithTags(ctx context.Context, msg ws.Msg, strict bool, ta
 				currentTags := singleConn.GetTags()
 				// check if all tags in current singleConn
 
-				for i, j := 0, 0; i < len(tags); {
-
+				for i, j := 0, 0; i < len(tags) && j < len(currentTags); {
+					if tags[i] == currentTags[j] {
+						match++
+						i++
+					} else if tags[i] < currentTags[j] {
+						break
+					}
+					j++
+				}
+				if match == len(tags) {
+					if err := singleConn.SendMsg(ctx, msg); err != nil {
+						return err
+					}
 				}
 			}
-
 		}
 	}
 

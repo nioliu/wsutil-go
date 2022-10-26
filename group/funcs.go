@@ -177,6 +177,7 @@ func (g *Group) DeleteConnById(ctx context.Context, id string) error {
 		}
 	}
 	delete(groupMap, id)
+	g.groupMap = groupMap
 
 	return nil
 }

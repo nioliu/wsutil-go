@@ -2,7 +2,6 @@ package ws
 
 import (
 	"context"
-	"fmt"
 	"git.woa.com/nioliu/wsutil-go/utils"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
@@ -40,7 +39,7 @@ func (s *SingleConn) writePump() {
 		var msg []byte
 		select {
 		case <-ticker.C:
-			msgType = websocket.BinaryMessage
+			msgType = websocket.PingMessage
 			msg = nil
 		case sendMsg := <-s.sendChan:
 			msgType = sendMsg.MsgType
@@ -48,7 +47,6 @@ func (s *SingleConn) writePump() {
 		case <-s.ctx.Done():
 			return
 		}
-		fmt.Printf("msgType:%d, msg:%s, time:%s\n", msgType, string(msg), time.Now().String())
 		var TaskErrs []error
 		go func() {
 			defer func() {
@@ -95,7 +93,6 @@ func (s *SingleConn) readPump() {
 		}
 	}()
 	for {
-		time.Sleep(time.Hour)
 		var TaskErrs []error
 		messageType, msg, err := s.conn.ReadMessage()
 		if err != nil {

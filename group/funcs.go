@@ -63,6 +63,7 @@ func (g *Group) Broadcast(ctx context.Context, msg ws.Msg) error {
 				if err := g.DeleteConnById(ctx, singleConn.GetId()); err != nil {
 					return err
 				}
+				continue
 			}
 			if err := singleConn.SendMsg(ctx, msg); err != nil {
 				utils.Logger.Error("send msg failed", zap.Error(err))

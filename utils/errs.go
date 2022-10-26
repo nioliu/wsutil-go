@@ -14,4 +14,6 @@ var (
 	OutOfMaxCntErr = errors.New("numbers out of limit")
 
 	TimeOutErr = errors.New("timeout")
+
+	DeleteObjectFailed = errors.New("delete object in map failed")
 )

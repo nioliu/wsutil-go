@@ -86,6 +86,15 @@ func (g *Group) SendMsgWithIds(ctx context.Context, msg ws.Msg, to ...string) er
 			}
 		}
 		singleConn := c.(*ws.SingleConn)
+
+		// check status
+		if !singleConn.GetStatus() {
+			if err = g.DeleteConnById(ctx, singleConn.GetId()); err != nil {
+				return err
+			}
+			continue
+		}
+
 		if err = singleConn.SendMsg(ctx, msg); err != nil {
 			utils.Logger.Error("send msg to single conn failed", zap.Error(err), zap.String("id", to[i]))
 			return err

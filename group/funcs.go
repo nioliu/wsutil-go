@@ -132,7 +132,9 @@ func (g *Group) AddNewSingleConn(singleConn *ws.SingleConn) error {
 	}
 
 	if !singleConn.GetStatus() {
-		return singleConn.Serve()
+		if err := singleConn.Serve(); err != nil {
+			return err
+		}
 	}
 
 	groupMap := g.GetGroupMap()

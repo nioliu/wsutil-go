@@ -29,13 +29,13 @@ func NewDefaultGroupWithContextAndUpgrader(ctx context.Context, opts ...Option) 
 	return g, nil
 }
 
-func NewGroupWithContext(ctx context.Context, upgrader ws.Upgrader, opts ...Option) (*Group, error) {
+func NewGroupWithContext(ctx context.Context, upgrader ws.Upgrader, opts ...Option) *Group {
 	g := &Group{WsUpgrader: upgrader}
 	opts = appendDefault(opts...)
 
 	apply(g, opts...)
 	go checkAllInMap(ctx, g)
-	return g, nil
+	return g
 }
 
 func checkAllInMap(ctx context.Context, g *Group) {

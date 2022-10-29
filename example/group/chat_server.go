@@ -22,17 +22,7 @@ func main() {
 
 	engine.Handle("GET", "/add", addUserToGroup)
 
-	engine.Handle("POST", "/msg", func(c *gin.Context) {
-		msg := c.Query("msg")
-		log.Println(msg)
-		if err := g.Broadcast(c, ws.Msg{
-			Msg:     []byte(msg),
-			MsgType: websocket.TextMessage,
-		}); err != nil {
-			log.Println(err)
-			return
-		}
-	})
+	engine.Handle("POST", "/msg", broadcastMsg)
 	if err := engine.Run("0.0.0.0:9090"); err != nil {
 		log.Fatal(err)
 	}
@@ -86,4 +76,16 @@ func addUserToGroup(ctx *gin.Context) {
 
 	log.Println(ctx, "add new single conn,id:"+singleConn.GetId())
 
+}
+
+func broadcastMsg(c *gin.Context) {
+	msg := c.Query("msg")
+	log.Println(msg)
+	if err := g.Broadcast(c, ws.Msg{
+		Msg:     []byte(msg),
+		MsgType: websocket.TextMessage,
+	}); err != nil {
+		log.Println(err)
+		return
+	}
 }

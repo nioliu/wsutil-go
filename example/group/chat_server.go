@@ -8,13 +8,20 @@ import (
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
 	"log"
-	"net/http"
 	"time"
 )
 
 var g *group.Group
 
 func main() {
+	// init upgreader
+	var err error
+	g, err = group.NewDefaultGroupAndUpgrader()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// init gin
 	engine := gin.New()
 	c := context.Background()
 	// init root group
@@ -23,30 +30,34 @@ func main() {
 	engine.Handle("GET", "/add", addUserToGroup)
 
 	engine.Handle("POST", "/msg", broadcastMsg)
+
+	engine.Handle("POST", "/msg/tags", sendMsgToTag)
+
 	if err := engine.Run("0.0.0.0:9090"); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func addUserToGroup(ctx *gin.Context) {
-	upgrader := websocket.Upgrader{CheckOrigin: func(r *http.Request) bool {
-		return true
-	}}
-	conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
+	conn, err := g.WsUpgrader.Upgrade(ctx.Writer, ctx.Request, nil)
 	if err != nil {
 		log.Println(zap.Error(err))
 		return
 	}
+	tag := ctx.Query("tag")
 	singleConn, err := ws.NewSingleConn(ctx, conn, ws.WithContext(ctx),
-		ws.WithHeartCheck(time.Second*10), ws.WithReceiveTaskErrors(func(ctx context.Context, id string, err []error) error {
+		ws.WithHeartCheck(time.Second*10),
+		ws.WithReceiveTaskErrors(func(ctx context.Context, id string, err []error) error {
 			log.Println(ctx)
 			log.Println(id)
 			log.Println(err)
 			return err[len(err)-1]
-		}), ws.WithHandleReceiveMsg(
+		}),
+		ws.WithHandleReceiveMsg(
 			func(ctx context.Context, id string, msgType int, msg []byte, err []error) error {
 				if err != nil {
 					log.Println(err)
+					return err[0]
 				}
 				switch msgType {
 				case websocket.BinaryMessage:
@@ -55,13 +66,9 @@ func addUserToGroup(ctx *gin.Context) {
 					log.Println("this is a text message: ", string(msg))
 				}
 				return nil
-			}))
+			}),
+		ws.WithTags(tag))
 	if err != nil {
-		log.Println(zap.Error(err))
-		return
-	}
-
-	if err = singleConn.Serve(); err != nil {
 		log.Println(zap.Error(err))
 		return
 	}
@@ -85,6 +92,17 @@ func broadcastMsg(c *gin.Context) {
 		Msg:     []byte(msg),
 		MsgType: websocket.TextMessage,
 	}); err != nil {
+		log.Println(err)
+		return
+	}
+}
+
+func sendMsgToTag(c *gin.Context) {
+	msg := c.Query("msg")
+	tag := c.Query("tag")
+	log.Println(msg)
+	if err := g.SendMsgWithTags(c, ws.Msg{Msg: []byte(msg), MsgType: websocket.TextMessage},
+		true, tag); err != nil {
 		log.Println(err)
 		return
 	}

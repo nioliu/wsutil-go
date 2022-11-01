@@ -6,6 +6,7 @@ import (
 	"git.woa.com/nioliu/wsutil-go/ws"
 	"github.com/gorilla/websocket"
 	"sort"
+	"sync"
 	"time"
 )
 
@@ -25,6 +26,9 @@ type Operation interface {
 
 	// AddNewSingleConn add single connector to group
 	AddNewSingleConn(conn *ws.SingleConn) error
+
+	// DeleteConnById delete object in map
+	DeleteConnById(ctx context.Context, id string) error
 }
 
 type Map map[string]interface{}
@@ -43,6 +47,8 @@ type Group struct {
 	maxConnDuration time.Duration
 	// WsUpgrader
 	WsUpgrader ws.Upgrader
+	// safe concurrent operation
+	mu sync.RWMutex
 
 	// beforeHandleHookFunc is applied before handle received msg
 	beforeHandleHookFunc ws.HandleMsgFunc
@@ -56,8 +62,12 @@ type Group struct {
 func (g *Group) SendMsgWithTags(ctx context.Context, msg ws.Msg, strict bool, tags ...string) error {
 	sort.Strings(tags)
 
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+
 	if !strict {
 		for tag := range tags {
+
 			for _, v := range g.GetGroupMap() {
 				if subG, is := v.(*Group); is {
 					if err := subG.SendMsgWithTags(ctx, msg, strict, tags...); err != nil {
@@ -114,6 +124,9 @@ func (g *Group) SendMsgWithTags(ctx context.Context, msg ws.Msg, strict bool, ta
 }
 
 func (g *Group) Broadcast(ctx context.Context, msg ws.Msg) error {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+
 	for _, v := range g.GetGroupMap() {
 		if subG, is := v.(*Group); is {
 			if err := subG.Broadcast(ctx, msg); err != nil {
@@ -147,6 +160,9 @@ func (g *Group) WorldPing(ctx context.Context) error {
 }
 
 func (g *Group) SendMsgWithIds(ctx context.Context, msg ws.Msg, to ...string) error {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+
 	for i := 0; i < len(to); i++ {
 		c, err := g.GetConnById(to[i])
 		if err != nil {
@@ -177,12 +193,15 @@ func (g *Group) SendMsgWithIds(ctx context.Context, msg ws.Msg, to ...string) er
 // AddNewSingleConn add new ws Conn in group, id stand for this conn
 // the key can be *net.Coon or new *Group
 func (g *Group) AddNewSingleConn(singleConn *ws.SingleConn) error {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
 	if singleConn == nil {
 		return utils.InvalidArgsErr
 	}
 	// check limit
 	if len(g.groupMap)+1 > g.maxConnCnt {
-		// check active connections
+		// check active connections and delete inactive connections
 		if err := g.Broadcast(context.Background(), ws.Msg{}); err != nil {
 			return err
 		}
@@ -204,6 +223,9 @@ func (g *Group) AddNewSingleConn(singleConn *ws.SingleConn) error {
 }
 
 func (g *Group) AddSubGroup(ctx context.Context, id string, group *Group) error {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
 	if group == nil {
 		return utils.InvalidArgsErr
 	}
@@ -221,13 +243,16 @@ func (g *Group) AddSubGroup(ctx context.Context, id string, group *Group) error 
 }
 
 func (g *Group) DeleteConnById(ctx context.Context, id string) error {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
 	groupMap := g.GetGroupMap()
 	singleConn, exist := groupMap[id]
 	if !exist {
 		return utils.IdNotFoundErr
 	}
 	if subG, is := singleConn.(*Group); is {
-		if err := subG.DeleteAllInMap(ctx); err != nil {
+		if err := subG.deleteAllInMap(ctx); err != nil {
 			return err
 		}
 	}
@@ -235,6 +260,7 @@ func (g *Group) DeleteConnById(ctx context.Context, id string) error {
 	if !is {
 		return utils.InvalidArgsErr
 	}
+
 	if sc.GetStatus() {
 		if err := sc.Close(); err != nil {
 			return err
@@ -246,7 +272,7 @@ func (g *Group) DeleteConnById(ctx context.Context, id string) error {
 	return nil
 }
 
-func (g *Group) DeleteAllInMap(ctx context.Context) error {
+func (g *Group) deleteAllInMap(ctx context.Context) error {
 	for k, _ := range g.groupMap {
 		if err := g.DeleteConnById(ctx, k); err != nil {
 			return err
@@ -259,6 +285,9 @@ func (g *Group) DeleteAllInMap(ctx context.Context) error {
 // the return may be a subgroup or net.Conn, developer need to
 // charge with this.
 func (g *Group) GetConnById(id string) (interface{}, error) {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+
 	groupMap := g.GetGroupMap()
 	i, exist := groupMap[id]
 	if !exist {

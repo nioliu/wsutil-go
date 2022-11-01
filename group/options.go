@@ -4,6 +4,7 @@ import (
 	"git.woa.com/nioliu/wsutil-go/utils"
 	"git.woa.com/nioliu/wsutil-go/ws"
 	"go.uber.org/zap"
+	"log"
 	"math/rand"
 	"strconv"
 	"time"
@@ -31,7 +32,7 @@ func appendDefault(opts ...Option) []Option {
 
 func WithMaxConnCnt(cnt int) Option {
 	if cnt <= 0 {
-		utils.Logger.Fatal("integer can't less than 1")
+		log.Fatal("integer can't less than 1")
 		return nil
 	}
 	return func(group *Group) {
@@ -63,7 +64,7 @@ func WithMaxConnDuration(duration time.Duration) Option {
 // WithUpgrader for user decide which websocket upgrader to use
 func WithUpgrader(upgrader ws.Upgrader) Option {
 	if upgrader == nil {
-		utils.Logger.Fatal("set upgrader failed", zap.Error(utils.InvalidOptionsErr))
+		log.Fatal("set upgrader failed", zap.Error(utils.InvalidOptionsErr))
 		return nil
 	}
 	return func(group *Group) {

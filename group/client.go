@@ -4,9 +4,7 @@ package group
 
 import (
 	"context"
-	"git.woa.com/nioliu/wsutil-go/utils"
 	"git.woa.com/nioliu/wsutil-go/ws"
-	"go.uber.org/zap"
 	"time"
 )
 
@@ -42,7 +40,6 @@ func checkAllInMap(ctx context.Context, g *Group) {
 	ticker := time.NewTicker(g.heartCheck)
 	for range ticker.C {
 		if err := g.Broadcast(ctx, ws.Msg{}); err != nil {
-			utils.Logger.Error("check status failed", zap.Error(err))
 			return
 		}
 	}

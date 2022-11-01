@@ -5,7 +5,6 @@ import (
 	"git.woa.com/nioliu/wsutil-go/utils"
 	"git.woa.com/nioliu/wsutil-go/ws"
 	"github.com/gorilla/websocket"
-	"go.uber.org/zap"
 	"sort"
 	"time"
 )
@@ -42,7 +41,7 @@ type Group struct {
 	heartCheck time.Duration
 	// max conn duration
 	maxConnDuration time.Duration
-	// upgrader
+	// WsUpgrader
 	WsUpgrader ws.Upgrader
 
 	// beforeHandleHookFunc is applied before handle received msg
@@ -89,11 +88,10 @@ func (g *Group) SendMsgWithTags(ctx context.Context, msg ws.Msg, strict bool, ta
 				if len(tags) > len(singleConn.GetTags()) {
 					break
 				}
-
 				var match int
 				currentTags := singleConn.GetTags()
-				// check if all tags in current singleConn
 
+				// check if all tags in current singleConn
 				for i, j := 0, 0; i < len(tags) && j < len(currentTags); {
 					if tags[i] == currentTags[j] {
 						match++
@@ -119,7 +117,6 @@ func (g *Group) Broadcast(ctx context.Context, msg ws.Msg) error {
 	for _, v := range g.GetGroupMap() {
 		if subG, is := v.(*Group); is {
 			if err := subG.Broadcast(ctx, msg); err != nil {
-				utils.Logger.Error("broadcast failed", zap.Error(err))
 				return err
 			}
 		} else {
@@ -135,7 +132,6 @@ func (g *Group) Broadcast(ctx context.Context, msg ws.Msg) error {
 				continue
 			}
 			if err := singleConn.SendMsg(ctx, msg); err != nil {
-				utils.Logger.Error("send msg failed", zap.Error(err))
 				return err
 			}
 		}
@@ -154,12 +150,10 @@ func (g *Group) SendMsgWithIds(ctx context.Context, msg ws.Msg, to ...string) er
 	for i := 0; i < len(to); i++ {
 		c, err := g.GetConnById(to[i])
 		if err != nil {
-			utils.Logger.Error("get object in map failed", zap.Error(err))
 			return err
 		}
 		if subG, is := c.(*Group); is {
 			if err = subG.Broadcast(ctx, msg); err != nil {
-				utils.Logger.Error("broadcast subgroup failed", zap.Error(err))
 				return err
 			}
 		}
@@ -174,7 +168,6 @@ func (g *Group) SendMsgWithIds(ctx context.Context, msg ws.Msg, to ...string) er
 		}
 
 		if err = singleConn.SendMsg(ctx, msg); err != nil {
-			utils.Logger.Error("send msg to single conn failed", zap.Error(err), zap.String("id", to[i]))
 			return err
 		}
 	}
@@ -185,7 +178,6 @@ func (g *Group) SendMsgWithIds(ctx context.Context, msg ws.Msg, to ...string) er
 // the key can be *net.Coon or new *Group
 func (g *Group) AddNewSingleConn(singleConn *ws.SingleConn) error {
 	if singleConn == nil {
-		utils.Logger.Error("add singleConn failed", zap.Error(utils.InvalidArgsErr))
 		return utils.InvalidArgsErr
 	}
 	// check limit
@@ -195,7 +187,6 @@ func (g *Group) AddNewSingleConn(singleConn *ws.SingleConn) error {
 			return err
 		}
 		if len(g.groupMap)+1 > g.maxConnCnt {
-			utils.Logger.Error("add singleConn failed", zap.Error(utils.OutOfMaxCntErr))
 			return utils.OutOfMaxCntErr
 		}
 	}
@@ -214,11 +205,9 @@ func (g *Group) AddNewSingleConn(singleConn *ws.SingleConn) error {
 
 func (g *Group) AddSubGroup(ctx context.Context, id string, group *Group) error {
 	if group == nil {
-		utils.Logger.Error("add group failed", zap.Error(utils.InvalidArgsErr))
 		return utils.InvalidArgsErr
 	}
 	if len(g.groupMap)+len(group.groupMap) > g.maxConnCnt {
-		utils.Logger.Error("add group failed", zap.Error(utils.OutOfMaxCntErr))
 		return utils.OutOfMaxCntErr
 	}
 	// check status
@@ -235,7 +224,6 @@ func (g *Group) DeleteConnById(ctx context.Context, id string) error {
 	groupMap := g.GetGroupMap()
 	singleConn, exist := groupMap[id]
 	if !exist {
-		utils.Logger.Error("delete failed", zap.Error(utils.IdNotFoundErr))
 		return utils.IdNotFoundErr
 	}
 	if subG, is := singleConn.(*Group); is {
@@ -245,12 +233,10 @@ func (g *Group) DeleteConnById(ctx context.Context, id string) error {
 	}
 	sc, is := singleConn.(*ws.SingleConn)
 	if !is {
-		utils.Logger.Error("invalid type for current id", zap.Error(utils.InvalidArgsErr))
 		return utils.InvalidArgsErr
 	}
 	if sc.GetStatus() {
 		if err := sc.Close(); err != nil {
-			utils.Logger.Error("close single conn failed", zap.Error(err))
 			return err
 		}
 	}
@@ -263,7 +249,7 @@ func (g *Group) DeleteConnById(ctx context.Context, id string) error {
 func (g *Group) DeleteAllInMap(ctx context.Context) error {
 	for k, _ := range g.groupMap {
 		if err := g.DeleteConnById(ctx, k); err != nil {
-			utils.Logger.Error("close failed", zap.Error(err), zap.String("id", k))
+			return err
 		}
 	}
 	return nil
@@ -276,7 +262,6 @@ func (g *Group) GetConnById(id string) (interface{}, error) {
 	groupMap := g.GetGroupMap()
 	i, exist := groupMap[id]
 	if !exist {
-		utils.Logger.Error("get id failed", zap.Error(utils.IdNotFoundErr))
 		return nil, utils.IdNotFoundErr
 	}
 	return i, nil

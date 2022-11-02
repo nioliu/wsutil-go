@@ -4,5 +4,8 @@ wsutil-go is a websocket tools set based on gorilla/websocket.
 
 ## How to use?
 
-- user decided which websocket package to use(recommend default gorilla/websocket)
+- [examples](https://github.com/nioliu/wsutil-go/tree/master/example/group)
 
+## Stability
+
+Need to be verified.

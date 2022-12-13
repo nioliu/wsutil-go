@@ -6,6 +6,7 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"math/rand"
+	"reflect"
 	"strconv"
 	"time"
 )
@@ -52,6 +53,15 @@ func WithHeartCheck(duration time.Duration) Option {
 	}
 }
 
+func WithHandleBroadcastError(f func(g *Group, conn *ws.SingleConn, err error) error) Option {
+	return func(group *Group) {
+		if group.handleBroadcastError != nil {
+			return
+		}
+		group.handleBroadcastError = f
+	}
+}
+
 func WithMaxConnDuration(duration time.Duration) Option {
 	return func(group *Group) {
 		if group.maxConnDuration != 0 {
@@ -63,7 +73,11 @@ func WithMaxConnDuration(duration time.Duration) Option {
 
 // WithUpgrader for user decide which websocket upgrader to use
 func WithUpgrader(upgrader ws.Upgrader) Option {
-	if upgrader == nil {
+	t := reflect.ValueOf(upgrader)
+	if t.Kind() != reflect.Pointer {
+		log.Fatal("need pointer to set upgrader")
+	}
+	if t.IsNil() {
 		log.Fatal("set upgrader failed", zap.Error(utils.InvalidOptionsErr))
 		return nil
 	}

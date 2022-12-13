@@ -8,34 +8,25 @@ import (
 	"time"
 )
 
-// NewDefaultGroupAndUpgrader build websocket group based on gorilla/websocket
-func NewDefaultGroupAndUpgrader(opts ...Option) (*Group, error) {
+// New build websocket group based on gorilla/websocket
+func New(opts ...Option) (*Group, error) {
 	ctx := context.Background()
-	return NewDefaultGroupWithContextAndUpgrader(ctx, opts...)
+	return NewWithContext(ctx, opts...)
 }
 
-// NewDefaultGroupWithContextAndUpgrader build websocket group based on gorilla/websocket with context
-func NewDefaultGroupWithContextAndUpgrader(ctx context.Context, opts ...Option) (*Group, error) {
+// NewWithContext build websocket group based on gorilla/websocket with context
+func NewWithContext(ctx context.Context, opts ...Option) (*Group, error) {
 	g := &Group{}
-
 	// only apply first option for each.
 	opts = appendDefault(opts...)
 
 	apply(g, opts...)
-	go checkAllInMap(ctx, g)
+	checkAllInMap(ctx, g) // check status
 
 	return g, nil
 }
 
-func NewGroupWithContext(ctx context.Context, upgrader ws.Upgrader, opts ...Option) *Group {
-	g := &Group{WsUpgrader: upgrader}
-	opts = appendDefault(opts...)
-
-	apply(g, opts...)
-	go checkAllInMap(ctx, g)
-	return g
-}
-
+// heart beat
 func checkAllInMap(ctx context.Context, g *Group) {
 	ticker := time.NewTicker(g.heartCheck)
 	for range ticker.C {

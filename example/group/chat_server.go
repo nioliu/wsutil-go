@@ -14,19 +14,18 @@ import (
 var g *group.Group
 
 func main() {
-	// init upgreader
 	var err error
-	g, err = group.NewDefaultGroupAndUpgrader()
+	c := context.Background()
+	// init root group
+	g, err = group.NewWithContext(c, group.WithUpgrader(ws.NewWrappedGorillaUpgrader()), group.WithMaxConnCnt(10))
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatal(err)
 	}
 
 	// init gin
 	engine := gin.New()
-	c := context.Background()
-	// init root group
-	g = group.NewGroupWithContext(c, ws.NewWrappedGorillaUpgrader(), group.WithMaxConnCnt(10))
 
+	// handle ...
 	engine.Handle("GET", "/add", addUserToGroup)
 
 	engine.Handle("POST", "/msg", broadcastMsg)

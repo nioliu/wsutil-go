@@ -2,9 +2,8 @@ package ws
 
 import (
 	"context"
-	"math/rand"
+	"github.com/google/uuid"
 	"sort"
-	"strconv"
 	"time"
 )
 
@@ -105,8 +104,7 @@ func WithId(id string) Option {
 		if conn.id != "" {
 			return
 		} else if id == "" {
-			rand.Seed(time.Now().Unix())
-			id = strconv.Itoa(rand.Int())
+			id = uuid.New().String()
 		}
 		conn.id = id
 	}

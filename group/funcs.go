@@ -57,6 +57,10 @@ type Group struct {
 
 	// wordCheckInterval check if all connectors in groupMap is active
 	wordCheckInterval time.Time
+
+	// handleBroadcastError handle broadcast error after send msg failed, if this return error,
+	// broadcast will be stopped and return
+	handleBroadcastError func(g *Group, conn *ws.SingleConn, err error) error
 }
 
 func (g *Group) SendMsgWithTags(ctx context.Context, msg ws.Msg, strict bool, tags ...string) error {
@@ -67,7 +71,6 @@ func (g *Group) SendMsgWithTags(ctx context.Context, msg ws.Msg, strict bool, ta
 
 	if !strict {
 		for tag := range tags {
-
 			for _, v := range g.GetGroupMap() {
 				if subG, is := v.(*Group); is {
 					if err := subG.SendMsgWithTags(ctx, msg, strict, tags...); err != nil {
@@ -145,7 +148,9 @@ func (g *Group) Broadcast(ctx context.Context, msg ws.Msg) error {
 				continue
 			}
 			if err := singleConn.SendMsg(ctx, msg); err != nil {
-				return err
+				if g.handleBroadcastError != nil {
+					return g.handleBroadcastError(g, singleConn, err)
+				}
 			}
 		}
 	}

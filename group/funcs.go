@@ -5,6 +5,7 @@ import (
 	"git.woa.com/nioliu/wsutil-go/utils"
 	"git.woa.com/nioliu/wsutil-go/ws"
 	"github.com/gorilla/websocket"
+	"net/http"
 	"sort"
 	"sync"
 	"time"
@@ -23,6 +24,10 @@ type Operation interface {
 
 	// SendMsgWithTags send msg to specified tags
 	SendMsgWithTags(ctx context.Context, msg ws.Msg, strict bool, tags ...string) error
+
+	// AddNewFromHttp add new single conn from http
+	AddNewFromHttp(ctx context.Context, w http.ResponseWriter,
+		req *http.Request, rspHeader http.Header, opts ...ws.Option) error
 
 	// AddNewSingleConn add single connector to group
 	AddNewSingleConn(conn *ws.SingleConn) error
@@ -193,6 +198,18 @@ func (g *Group) SendMsgWithIds(ctx context.Context, msg ws.Msg, to ...string) er
 		}
 	}
 	return nil
+}
+
+func (g *Group) AddNewFromHttp(ctx context.Context, w http.ResponseWriter,
+	req *http.Request, rspHeader http.Header, opts ...ws.Option) error {
+	conn, err := g.WsUpgrader.Upgrade(w, req, rspHeader)
+	if err != nil {
+		return err
+	}
+	opts = append(opts, ws.WithContext(ctx))
+	singleConn, err := ws.NewSingleConn(ctx, conn, opts...)
+
+	return g.AddNewSingleConn(singleConn)
 }
 
 // AddNewSingleConn add new ws Conn in group, id stand for this conn

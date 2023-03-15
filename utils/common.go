@@ -6,8 +6,8 @@ import (
 )
 
 func DoWithDeadLine(ctx context.Context, duration time.Duration, funcChan chan int) error {
-	ctx, cancle := context.WithTimeout(ctx, duration)
-	defer cancle()
+	ctx, cancel := context.WithTimeout(ctx, duration)
+	defer cancel()
 	select {
 	case <-ctx.Done():
 		return TimeOutErr

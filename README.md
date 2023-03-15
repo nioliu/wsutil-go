@@ -10,7 +10,7 @@ wsutil-go 是一个 Go 语言实现的 WebSocket 连接管理库。它可以让�
 
 ```go
 
-go get git.woa.com/nioliu/wsutil-go /group
+go get git.woa.com/nioliu/wsutil-go
 
 ```
 

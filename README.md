@@ -1,6 +1,6 @@
-# WebSocket Group
+# wsutil-go
 
-WebSocket Group 是一个 Go 语言实现的 WebSocket 连接管理库。它可以让你轻松创建和管理 WebSocket
+wsutil-go 是一个 Go 语言实现的 WebSocket 连接管理库。它可以让你轻松创建和管理 WebSocket
 连接，包括连接数限制、连接超时、心跳检测、消息广播等功能。WebSocket Group 支持用户自定义升级器和消息处理器，以及使用 Zap
 日志库记录日志。
 
